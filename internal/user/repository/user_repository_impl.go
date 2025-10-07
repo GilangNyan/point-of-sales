@@ -3,16 +3,17 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"gilangnyan/point-of-sales/internal/user/model"
 )
 
 const (
-	FindAllQuery        = `SELECT id, username, email, password, is_active, is_blocked FROM users`
-	FindByIDQuery       = `SELECT id, username, email, password, is_active, is_blocked FROM users WHERE id = $1`
-	FindByEmailQuery    = `SELECT id, username, email, password, is_active, is_blocked FROM users WHERE email = $1`
-	FindByUsernameQuery = `SELECT id, username, email, password, is_active, is_blocked FROM users WHERE username = $1`
+	FindAllQuery        = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id`
+	FindByIDQuery       = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id WHERE u.id = $1`
+	FindByEmailQuery    = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id WHERE u.email = $1`
+	FindByUsernameQuery = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id WHERE u.username = $1`
 	CreateQuery         = `INSERT INTO users (username, email, password, is_active, is_blocked) VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	UpdateQuery         = `UPDATE users SET username = $1, email = $2, password = $3, is_active = $4, is_blocked = $5 WHERE id = $6`
+	UpdateQuery         = `UPDATE users SET username = $1, email = $2, is_active = $3, is_blocked = $4 WHERE id = $5`
 	DeleteQuery         = `DELETE FROM users WHERE id = $1`
 )
 
@@ -20,7 +21,7 @@ type UserRepositoryImpl struct {
 	db *sql.DB
 }
 
-func (r *UserRepositoryImpl) FindAll(ctx context.Context) ([]*model.User, error) {
+func (r *UserRepositoryImpl) FindAll(ctx context.Context) ([]*model.UserWithProfile, error) {
 	rows, err := r.db.QueryContext(ctx, FindAllQuery)
 	if err != nil {
 		return nil, err
@@ -30,42 +31,43 @@ func (r *UserRepositoryImpl) FindAll(ctx context.Context) ([]*model.User, error)
 	return ScanUsers(rows)
 }
 
-func (r *UserRepositoryImpl) FindByID(ctx context.Context, id string) (*model.User, error) {
+func (r *UserRepositoryImpl) FindByID(ctx context.Context, id string) (*model.UserWithProfile, error) {
 	row := r.db.QueryRowContext(ctx, FindByIDQuery, id)
 
 	return ScanUser(row)
 }
 
-func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *UserRepositoryImpl) FindByEmail(ctx context.Context, email string) (*model.UserWithProfile, error) {
 	row := r.db.QueryRowContext(ctx, FindByEmailQuery, email)
+	fmt.Printf("Result: %v\n", row)
 
 	return ScanUser(row)
 }
 
-func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string) (*model.User, error) {
+func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string) (*model.UserWithProfile, error) {
 	row := r.db.QueryRowContext(ctx, FindByUsernameQuery, username)
+	fmt.Printf("Result: %v\n", row)
 
 	return ScanUser(row)
 }
 
-func (r *UserRepositoryImpl) Create(ctx context.Context, data model.User) (*model.User, error) {
+func (r *UserRepositoryImpl) Create(ctx context.Context, data model.User) (string, error) {
 	var id string
 	err := r.db.QueryRowContext(ctx, CreateQuery, data.Username, data.Email, data.Password, data.IsActive, data.IsBlocked).Scan(&id)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	data.ID = id
-	return &data, nil
+
+	return id, nil
 }
 
-func (r *UserRepositoryImpl) Update(ctx context.Context, id string, data model.User) (*model.User, error) {
-	_, err := r.db.ExecContext(ctx, UpdateQuery, data.Username, data.Email, data.Password, data.IsActive, data.IsBlocked, id)
+func (r *UserRepositoryImpl) Update(ctx context.Context, id string, data model.User) (string, error) {
+	_, err := r.db.ExecContext(ctx, UpdateQuery, data.Username, data.Email, data.IsActive, data.IsBlocked, id)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	data.ID = id
-	return &data, nil
+	return id, nil
 }
 
 func (r *UserRepositoryImpl) Delete(ctx context.Context, id string) error {
@@ -73,8 +75,8 @@ func (r *UserRepositoryImpl) Delete(ctx context.Context, id string) error {
 	return err
 }
 
-func NewUserRepository(sql *sql.DB) UserRepository {
+func NewUserRepository(db *sql.DB) UserRepository {
 	return &UserRepositoryImpl{
-		db: sql,
+		db: db,
 	}
 }

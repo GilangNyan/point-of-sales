@@ -6,11 +6,11 @@ import (
 )
 
 type UserRepository interface {
-	FindAll(ctx context.Context) ([]*model.User, error)
-	FindByID(ctx context.Context, id string) (*model.User, error)
-	FindByUsername(ctx context.Context, username string) (*model.User, error)
-	FindByEmail(ctx context.Context, email string) (*model.User, error)
-	Create(ctx context.Context, data model.User) (*model.User, error)
-	Update(ctx context.Context, id string, data model.User) (*model.User, error)
+	FindAll(ctx context.Context) ([]*model.UserWithProfile, error)
+	FindByID(ctx context.Context, id string) (*model.UserWithProfile, error)
+	FindByUsername(ctx context.Context, username string) (*model.UserWithProfile, error)
+	FindByEmail(ctx context.Context, email string) (*model.UserWithProfile, error)
+	Create(ctx context.Context, data model.User) (string, error)
+	Update(ctx context.Context, id string, data model.User) (string, error)
 	Delete(ctx context.Context, id string) error
 }

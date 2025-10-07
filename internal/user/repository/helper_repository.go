@@ -5,19 +5,19 @@ import (
 	"gilangnyan/point-of-sales/internal/user/model"
 )
 
-func ScanUser(row *sql.Row) (*model.User, error) {
-	var user model.User
-	if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.IsActive, &user.IsBlocked); err != nil {
+func ScanUser(row *sql.Row) (*model.UserWithProfile, error) {
+	var user model.UserWithProfile
+	if err := row.Scan(&user.ID, &user.Username, &user.Email, &user.FullName, &user.DateOfBirth, &user.PhoneNumber, &user.Address, &user.ProfilePicture, &user.IsActive, &user.IsBlocked); err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func ScanUsers(rows *sql.Rows) ([]*model.User, error) {
-	var users []*model.User
+func ScanUsers(rows *sql.Rows) ([]*model.UserWithProfile, error) {
+	var users []*model.UserWithProfile
 	for rows.Next() {
-		var user model.User
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.IsActive, &user.IsBlocked); err != nil {
+		var user model.UserWithProfile
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.FullName, &user.DateOfBirth, &user.PhoneNumber, &user.Address, &user.ProfilePicture, &user.IsActive, &user.IsBlocked); err != nil {
 			return nil, err
 		}
 		users = append(users, &user)

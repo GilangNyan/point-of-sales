@@ -10,27 +10,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UserModule represents the complete user module with all dependencies
 type UserModule struct {
-	Repository repository.UserRepository
-	Usecase    usecase.UserUsecase
-	Handler    *handler.UserHandler
-	Routes     *route.UserRoutes
+	Repository  repository.UserRepository
+	Repository2 repository.UserProfileRepository
+	Usecase     usecase.UserUsecase
+	Handler     *handler.UserHandler
+	Routes      *route.UserRoutes
 }
 
 // NewUserModule creates a new user module with all dependencies injected
 func NewUserModule(db *sql.DB) *UserModule {
 	// Build dependency chain
 	repo := repository.NewUserRepository(db)
-	uc := usecase.NewUserUsecase(repo)
+	repo2 := repository.NewUserProfileRepository(db)
+	uc := usecase.NewUserUsecase(repo, repo2)
 	handler := handler.NewUserHandler(uc)
 	routes := route.NewUserRoutes(*handler)
 
 	return &UserModule{
-		Repository: repo,
-		Usecase:    uc,
-		Handler:    handler,
-		Routes:     routes,
+		Repository:  repo,
+		Repository2: repo2,
+		Usecase:     uc,
+		Handler:     handler,
+		Routes:      routes,
 	}
 }
 
@@ -47,8 +49,8 @@ func ProvideUserRepository(db *sql.DB) repository.UserRepository {
 }
 
 // ProvideUserUsecase creates user usecase
-func ProvideUserUsecase(repo repository.UserRepository) usecase.UserUsecase {
-	return usecase.NewUserUsecase(repo)
+func ProvideUserUsecase(repo repository.UserRepository, repo2 repository.UserProfileRepository) usecase.UserUsecase {
+	return usecase.NewUserUsecase(repo, repo2)
 }
 
 // ProvideUserHandler creates user handler

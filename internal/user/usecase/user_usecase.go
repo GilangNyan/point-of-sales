@@ -6,8 +6,8 @@ import (
 )
 
 type UserUsecase interface {
-	FindAll(ctx context.Context) ([]*model.User, error)
-	Create(ctx context.Context, data model.CreateUserDto) (*model.User, error)
-	Update(ctx context.Context, id string, data model.UpdateUserDto) (*model.User, error)
+	FindAll(ctx context.Context) ([]*model.UserWithProfile, error)
+	Create(ctx context.Context, data model.CreateUserDto) (string, error)
+	Update(ctx context.Context, id string, data model.UpdateUserDto) (string, error)
 	Delete(ctx context.Context, id string) error
 }
