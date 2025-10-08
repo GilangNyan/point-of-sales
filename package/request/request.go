@@ -13,7 +13,7 @@ type PaginationParams struct {
 	SortDir  string `json:"sortDir"`
 }
 
-func GetPaginationParams(ctx *gin.Context) PaginationParams {
+func GetPaginationParams(ctx *gin.Context) *PaginationParams {
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(ctx.DefaultQuery("pageSize", "10"))
 	sortBy := ctx.DefaultQuery("sortBy", "id")
@@ -29,7 +29,7 @@ func GetPaginationParams(ctx *gin.Context) PaginationParams {
 		sortDir = "ASC"
 	}
 
-	return PaginationParams{
+	return &PaginationParams{
 		Page:     page,
 		PageSize: pageSize,
 		SortBy:   sortBy,

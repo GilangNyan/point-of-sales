@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gilangnyan/point-of-sales/internal/user/model"
+	"gilangnyan/point-of-sales/package/request"
 )
 
 const (
@@ -21,14 +22,30 @@ type UserRepositoryImpl struct {
 	db *sql.DB
 }
 
-func (r *UserRepositoryImpl) FindAll(ctx context.Context) ([]*model.UserWithProfile, error) {
-	rows, err := r.db.QueryContext(ctx, FindAllQuery)
+func (r *UserRepositoryImpl) FindAll(ctx context.Context, params *request.PaginationParams) ([]*model.UserWithProfile, int64, error) {
+	whereClause := ""
+	args := []interface{}{}
+	argIndex := 1
+
+	orderClause := fmt.Sprintf("ORDER BY u.%s %s", params.SortBy, params.SortDir)
+
+	countQuery := `SELECT COUNT(DISTINCT u.id) FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id ` + whereClause
+	var total int64
+	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	dataQuery := FindAllQuery + whereClause + " " + orderClause + fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	args = append(args, params.GetLimit(), params.GetOffset())
+
+	rows, err := r.db.QueryContext(ctx, dataQuery, args...)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	return ScanUsers(rows)
+	return ScanUsers(rows, total)
 }
 
 func (r *UserRepositoryImpl) FindByID(ctx context.Context, id string) (*model.UserWithProfile, error) {

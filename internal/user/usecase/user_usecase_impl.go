@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"gilangnyan/point-of-sales/internal/user/model"
 	"gilangnyan/point-of-sales/internal/user/repository"
+	"gilangnyan/point-of-sales/package/request"
+	"gilangnyan/point-of-sales/package/response"
 	"gilangnyan/point-of-sales/package/utils"
 )
 
@@ -14,13 +16,13 @@ type UserUsecaseImpl struct {
 	repo2 repository.UserProfileRepository
 }
 
-func (u *UserUsecaseImpl) FindAll(ctx context.Context) ([]*model.UserWithProfile, error) {
-	data, err := u.repo.FindAll(ctx)
+func (u *UserUsecaseImpl) FindAll(ctx context.Context, params *request.PaginationParams) (*response.PaginationResponse[*model.UserWithProfile], error) {
+	data, total, err := u.repo.FindAll(ctx, params)
 	if err != nil {
 		fmt.Printf("Error retrieving users: %v\n", err)
 		return nil, errors.New("failed to retrieve users")
 	}
-	return data, nil
+	return response.NewPaginationResponse(data, total, params.Page, params.PageSize), nil
 }
 
 func (u *UserUsecaseImpl) Create(ctx context.Context, data model.CreateUserDto) (string, error) {
