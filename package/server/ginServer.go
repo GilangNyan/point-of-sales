@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"gilangnyan/point-of-sales/internal/config"
+	roleDI "gilangnyan/point-of-sales/internal/role/di"
 	userDI "gilangnyan/point-of-sales/internal/user/di"
 	"gilangnyan/point-of-sales/package/database"
 
@@ -30,13 +31,13 @@ func (s *GinServer) setupRoutes() {
 	// Create API v1 group
 	apiV1 := s.app.Group("/api")
 
-	// Initialize User module with DI
+	// User Module Routes
 	userModule := userDI.NewUserModule(s.db.GetDB())
 	userModule.RegisterRoutes(apiV1)
 
-	// TODO: Add other modules here
-	// productModule := productDI.NewProductModule(s.db.GetDB())
-	// productModule.RegisterRoutes(apiV1)
+	// Role Module Routes
+	roleModule := roleDI.NewRoleModule(s.db.GetDB())
+	roleModule.RegisterRoutes(apiV1)
 }
 
 func (s *GinServer) Start() {
