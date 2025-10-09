@@ -19,7 +19,6 @@ type UserUsecaseImpl struct {
 func (u *UserUsecaseImpl) FindAll(ctx context.Context, params *request.PaginationParams) (*response.PaginationResponse[*model.UserWithProfile], error) {
 	data, total, err := u.repo.FindAll(ctx, params)
 	if err != nil {
-		fmt.Printf("Error retrieving users: %v\n", err)
 		return nil, errors.New("failed to retrieve users")
 	}
 	return response.NewPaginationResponse(data, total, params.Page, params.PageSize), nil
