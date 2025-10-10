@@ -6,6 +6,7 @@ import (
 	"gilangnyan/point-of-sales/internal/user/repository"
 	"gilangnyan/point-of-sales/internal/user/route"
 	"gilangnyan/point-of-sales/internal/user/usecase"
+	"gilangnyan/point-of-sales/package/transaction"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +24,8 @@ func NewUserModule(db *sql.DB) *UserModule {
 	// Build dependency chain
 	repo := repository.NewUserRepository(db)
 	repo2 := repository.NewUserProfileRepository(db)
-	uc := usecase.NewUserUsecase(repo, repo2)
+	tx := transaction.NewTransactionManager(db)
+	uc := usecase.NewUserUsecase(repo, repo2, tx)
 	handler := handler.NewUserHandler(uc)
 	routes := route.NewUserRoutes(*handler)
 
@@ -49,8 +51,8 @@ func ProvideUserRepository(db *sql.DB) repository.UserRepository {
 }
 
 // ProvideUserUsecase creates user usecase
-func ProvideUserUsecase(repo repository.UserRepository, repo2 repository.UserProfileRepository) usecase.UserUsecase {
-	return usecase.NewUserUsecase(repo, repo2)
+func ProvideUserUsecase(repo repository.UserRepository, repo2 repository.UserProfileRepository, tx transaction.TransactionManager) usecase.UserUsecase {
+	return usecase.NewUserUsecase(repo, repo2, tx)
 }
 
 // ProvideUserHandler creates user handler

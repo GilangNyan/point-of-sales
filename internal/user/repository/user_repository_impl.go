@@ -14,7 +14,7 @@ const (
 	FindByEmailQuery    = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id WHERE u.email = $1`
 	FindByUsernameQuery = `SELECT u.id, u.username, u.email, up.full_name, up.date_of_birth, up.phone_number, up.address, up.profile_picture, u.is_active, u.is_blocked FROM users u LEFT JOIN user_profiles up ON u.id = up.user_id WHERE u.username = $1`
 	CreateQuery         = `INSERT INTO users (username, email, password, is_active, is_blocked) VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	UpdateQuery         = `UPDATE users SET username = $1, email = $2, is_active = $3, is_blocked = $4 WHERE id = $5`
+	UpdateQuery         = `UPDATE users SET username = $1, email = $2, is_active = $3, is_blocked = $4 WHERE id = $5 RETURNING id`
 	DeleteQuery         = `DELETE FROM users WHERE id = $1`
 )
 
@@ -68,9 +68,10 @@ func (r *UserRepositoryImpl) FindByUsername(ctx context.Context, username string
 	return ScanUser(row)
 }
 
-func (r *UserRepositoryImpl) Create(ctx context.Context, data model.User) (string, error) {
+func (r *UserRepositoryImpl) Create(ctx context.Context, tx *sql.Tx, data model.User) (string, error) {
 	var id string
-	err := r.db.QueryRowContext(ctx, CreateQuery, data.Username, data.Email, data.Password, data.IsActive, data.IsBlocked).Scan(&id)
+	// err := r.db.QueryRowContext(ctx, CreateQuery, data.Username, data.Email, data.Password, data.IsActive, data.IsBlocked).Scan(&id)
+	err := tx.QueryRowContext(ctx, CreateQuery, data.Username, data.Email, data.Password, data.IsActive, data.IsBlocked).Scan(&id)
 	if err != nil {
 		return "", err
 	}
@@ -78,17 +79,20 @@ func (r *UserRepositoryImpl) Create(ctx context.Context, data model.User) (strin
 	return id, nil
 }
 
-func (r *UserRepositoryImpl) Update(ctx context.Context, id string, data model.User) (string, error) {
-	_, err := r.db.ExecContext(ctx, UpdateQuery, data.Username, data.Email, data.IsActive, data.IsBlocked, id)
+func (r *UserRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, id string, data model.User) (string, error) {
+	var userID string
+	// _, err := r.db.ExecContext(ctx, UpdateQuery, data.Username, data.Email, data.IsActive, data.IsBlocked, id)
+	err := tx.QueryRowContext(ctx, UpdateQuery, data.Username, data.Email, data.IsActive, data.IsBlocked, id).Scan(&userID)
 	if err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return userID, nil
 }
 
-func (r *UserRepositoryImpl) Delete(ctx context.Context, id string) error {
-	_, err := r.db.ExecContext(ctx, DeleteQuery, id)
+func (r *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, id string) error {
+	// _, err := r.db.ExecContext(ctx, DeleteQuery, id)
+	_, err := tx.ExecContext(ctx, DeleteQuery, id)
 	return err
 }
 

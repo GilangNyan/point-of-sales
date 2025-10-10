@@ -16,26 +16,28 @@ const (
 	DeleteUserProfileQuery = `DELETE FROM user_profiles WHERE user_id=$1`
 )
 
-func (r *UserProfileRepositoryImpl) Create(ctx context.Context, data model.UserProfile) (string, error) {
+func (r *UserProfileRepositoryImpl) Create(ctx context.Context, tx *sql.Tx, data model.UserProfile) (string, error) {
 	var id string
-	err := r.db.QueryRowContext(ctx, CreateUserProfileQuery, data.FullName, data.UserID, data.PhoneNumber, data.DateOfBirth, data.Address).Scan(&id)
+	err := tx.QueryRowContext(ctx, CreateUserProfileQuery, data.FullName, data.UserID, data.PhoneNumber, data.DateOfBirth, data.Address).Scan(&id)
 	if err != nil {
 		return "", err
 	}
 	return id, nil
 }
 
-func (r *UserProfileRepositoryImpl) Update(ctx context.Context, userID string, data model.UserProfile) (string, error) {
+func (r *UserProfileRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, userID string, data model.UserProfile) (string, error) {
 	var id string
-	err := r.db.QueryRowContext(ctx, UpdateUserProfileQuery, data.FullName, data.PhoneNumber, data.DateOfBirth, data.Address, userID).Scan(&id)
+	// err := r.db.QueryRowContext(ctx, UpdateUserProfileQuery, data.FullName, data.PhoneNumber, data.DateOfBirth, data.Address, userID).Scan(&id)
+	err := tx.QueryRowContext(ctx, UpdateUserProfileQuery, data.FullName, data.PhoneNumber, data.DateOfBirth, data.Address, userID).Scan(&id)
 	if err != nil {
 		return "", err
 	}
 	return id, nil
 }
 
-func (r *UserProfileRepositoryImpl) Delete(ctx context.Context, userID string) error {
-	_, err := r.db.ExecContext(ctx, DeleteUserProfileQuery, userID)
+func (r *UserProfileRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, userID string) error {
+	// _, err := r.db.ExecContext(ctx, DeleteUserProfileQuery, userID)
+	_, err := tx.ExecContext(ctx, DeleteUserProfileQuery, userID)
 	return err
 }
 
