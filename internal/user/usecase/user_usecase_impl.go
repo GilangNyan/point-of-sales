@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gilangnyan/point-of-sales/internal/user/model"
 	"gilangnyan/point-of-sales/internal/user/repository"
+	userRoleRepo "gilangnyan/point-of-sales/internal/user_role/repository"
 	"gilangnyan/point-of-sales/package/request"
 	"gilangnyan/point-of-sales/package/response"
 	"gilangnyan/point-of-sales/package/transaction"
@@ -14,9 +15,10 @@ import (
 )
 
 type UserUsecaseImpl struct {
-	repo  repository.UserRepository
-	repo2 repository.UserProfileRepository
-	tx    transaction.TransactionManager
+	repo         repository.UserRepository
+	repo2        repository.UserProfileRepository
+	userRoleRepo userRoleRepo.UserRoleRepository
+	tx           transaction.TransactionManager
 }
 
 func (u *UserUsecaseImpl) FindAll(ctx context.Context, params *request.PaginationParams) (*response.PaginationResponse[*model.UserWithProfile], error) {
@@ -76,6 +78,13 @@ func (u *UserUsecaseImpl) Create(ctx context.Context, data model.CreateUserDto) 
 		_, err = u.repo2.Create(ctx, tx, *profile)
 		if err != nil {
 			return fmt.Errorf("failed to create user profile: %w", err)
+		}
+
+		if len(data.RoleIDs) > 0 {
+			err = u.userRoleRepo.AssignRolesWithTx(ctx, tx, createdUser, data.RoleIDs)
+			if err != nil {
+				return fmt.Errorf("failed to assign roles: %w", err)
+			}
 		}
 
 		createdUserID = createdUser
@@ -150,6 +159,19 @@ func (u *UserUsecaseImpl) Update(ctx context.Context, id string, data model.Upda
 			return fmt.Errorf("failed to update user profile: %w", err)
 		}
 
+		if data.RoleIDs != nil {
+			if len(*data.RoleIDs) > 0 {
+				err = u.userRoleRepo.RemoveAllUserRolesWithTx(ctx, tx, updatedUser)
+				if err != nil {
+					return fmt.Errorf("failed to remove existing roles: %w", err)
+				}
+				err = u.userRoleRepo.AssignRolesWithTx(ctx, tx, updatedUser, *data.RoleIDs)
+				if err != nil {
+					return fmt.Errorf("failed to assign roles: %w", err)
+				}
+			}
+		}
+
 		updatedUserID = updatedUser
 		return nil
 	})
@@ -182,10 +204,11 @@ func (u *UserUsecaseImpl) Delete(ctx context.Context, id string) error {
 	})
 }
 
-func NewUserUsecase(repo repository.UserRepository, repo2 repository.UserProfileRepository, tx transaction.TransactionManager) UserUsecase {
+func NewUserUsecase(repo repository.UserRepository, repo2 repository.UserProfileRepository, userRoleRepo userRoleRepo.UserRoleRepository, tx transaction.TransactionManager) UserUsecase {
 	return &UserUsecaseImpl{
-		repo:  repo,
-		repo2: repo2,
-		tx:    tx,
+		repo:         repo,
+		repo2:        repo2,
+		userRoleRepo: userRoleRepo,
+		tx:           tx,
 	}
 }
