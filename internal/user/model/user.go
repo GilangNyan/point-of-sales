@@ -29,11 +29,11 @@ type UserWithProfile struct {
 	ID             string  `json:"id"`
 	Username       string  `json:"username"`
 	Email          string  `json:"email"`
-	FullName       string  `json:"full_name"`
-	DateOfBirth    *string `json:"date_of_birth"`
-	PhoneNumber    *string `json:"phone_number"`
+	FullName       string  `json:"fullName"`
+	DateOfBirth    *string `json:"dateOfBirth"`
+	PhoneNumber    *string `json:"phoneNumber"`
 	Address        *string `json:"address"`
-	ProfilePicture *string `json:"profile_picture"`
-	IsActive       bool    `json:"is_active"`
-	IsBlocked      bool    `json:"is_blocked"`
+	ProfilePicture *string `json:"profilePicture"`
+	IsActive       bool    `json:"isActive"`
+	IsBlocked      bool    `json:"isBlocked"`
 }
