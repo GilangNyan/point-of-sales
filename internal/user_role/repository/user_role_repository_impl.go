@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"gilangnyan/point-of-sales/internal/user_role/model"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 	RemoveRoleQuery         = `DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`
 	RemoveAllUserRolesQuery = `DELETE FROM user_roles WHERE user_id = $1`
 	GetUserRolesQuery       = `SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1`
+	GetUserByUsernameQuery  = `SELECT id, email, username, password FROM users WHERE username = $1`
 	HasRoleQuery            = `SELECT EXISTS(SELECT 1 FROM user_roles WHERE user_id = $1 AND role_id = $2)`
 )
 
@@ -80,6 +82,17 @@ func (u *UserRoleRepositoryImpl) GetUserRoles(ctx context.Context, userID string
 	}
 
 	return roles, nil
+}
+
+func (u *UserRoleRepositoryImpl) FindUserByUsernameWithRoles(ctx context.Context, username string) (model.UserWithRoles, error) {
+	var user model.UserWithRoles
+	err := u.db.QueryRowContext(ctx, GetUserByUsernameQuery, username).Scan(&user.UserID, &user.Email, &user.Username, &user.Password)
+	if err != nil {
+		return user, err
+	}
+
+	user.Roles, err = u.GetUserRoles(ctx, user.UserID)
+	return user, err
 }
 
 func (u *UserRoleRepositoryImpl) HasRole(ctx context.Context, userID string, roleID string) (bool, error) {
