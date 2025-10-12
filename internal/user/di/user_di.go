@@ -2,6 +2,7 @@ package di
 
 import (
 	"database/sql"
+	"gilangnyan/point-of-sales/internal/middleware"
 	"gilangnyan/point-of-sales/internal/user/handler"
 	"gilangnyan/point-of-sales/internal/user/repository"
 	"gilangnyan/point-of-sales/internal/user/route"
@@ -22,7 +23,7 @@ type UserModule struct {
 }
 
 // NewUserModule creates a new user module with all dependencies injected
-func NewUserModule(db *sql.DB) *UserModule {
+func NewUserModule(db *sql.DB, middleware *middleware.JWTUserMiddleware) *UserModule {
 	// Build dependency chain
 	repo := repository.NewUserRepository(db)
 	repo2 := repository.NewUserProfileRepository(db)
@@ -30,7 +31,7 @@ func NewUserModule(db *sql.DB) *UserModule {
 	tx := transaction.NewTransactionManager(db)
 	uc := usecase.NewUserUsecase(repo, repo2, userRoleRepo, tx)
 	handler := handler.NewUserHandler(uc)
-	routes := route.NewUserRoutes(*handler)
+	routes := route.NewUserRoutes(*handler, middleware)
 
 	return &UserModule{
 		Repository:   repo,
@@ -65,6 +66,6 @@ func ProvideUserHandler(uc usecase.UserUsecase) *handler.UserHandler {
 }
 
 // ProvideUserRoutes creates user routes
-func ProvideUserRoutes(handler *handler.UserHandler) *route.UserRoutes {
-	return route.NewUserRoutes(*handler)
+func ProvideUserRoutes(handler *handler.UserHandler, middleware *middleware.JWTUserMiddleware) *route.UserRoutes {
+	return route.NewUserRoutes(*handler, middleware)
 }
