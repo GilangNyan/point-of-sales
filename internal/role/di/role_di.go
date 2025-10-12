@@ -2,6 +2,7 @@ package di
 
 import (
 	"database/sql"
+	"gilangnyan/point-of-sales/internal/middleware"
 	"gilangnyan/point-of-sales/internal/role/handler"
 	"gilangnyan/point-of-sales/internal/role/repository"
 	"gilangnyan/point-of-sales/internal/role/route"
@@ -17,11 +18,11 @@ type RoleModule struct {
 	Routes     *route.RoleRoutes
 }
 
-func NewRoleModule(db *sql.DB) *RoleModule {
+func NewRoleModule(db *sql.DB, middleware *middleware.JWTUserMiddleware) *RoleModule {
 	repo := repository.NewRoleRepository(db)
 	uc := usecase.NewRoleUsecase(repo)
 	handler := handler.NewRoleHandler(uc)
-	routes := route.NewRoleRoutes(*handler)
+	routes := route.NewRoleRoutes(*handler, middleware)
 
 	return &RoleModule{
 		Repository: repo,

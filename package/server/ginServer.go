@@ -66,7 +66,7 @@ func (s *GinServer) setupRoutes() {
 	userModule.RegisterRoutes(apiV1)
 
 	// Role Module Routes
-	roleModule := roleDI.NewRoleModule(s.db.GetDB())
+	roleModule := roleDI.NewRoleModule(s.db.GetDB(), s.jwtMiddleware)
 	roleModule.RegisterRoutes(apiV1)
 }
 
